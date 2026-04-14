@@ -187,6 +187,7 @@
     #sidebar.open { transform: translateX(0); }
     #main { margin-left: 0; }
     .topbar { padding-left: 72px; padding-right: 12px; gap: 6px; }
+    .topbar-right .btn { display: none; }
     .stats-grid-5 { grid-template-columns: repeat(2, 1fr); }
     .grid-2, .grid-3 { grid-template-columns: 1fr; }
     .dashboard-metrics { grid-template-columns: repeat(2, 1fr); }
@@ -194,8 +195,8 @@
     .content { padding: 14px; }
     .stat-value { font-size: 22px; }
     .tab-btn { padding: 7px 12px; font-size: 11px; }
-    th { padding: 8px 10px; }
-    td { padding: 8px 10px; }
+    th { padding: 8px 10px; font-size: 10px; }
+    td { padding: 8px 10px; font-size: 13px; }
     .card, .worker-card, .stat-card, .metric-card { padding: 12px; }
     .datetime { display: none; }
   }
@@ -203,8 +204,6 @@
     .stats-grid-5, .stats-grid { grid-template-columns: repeat(2, 1fr); }
     .dashboard-metrics { grid-template-columns: repeat(2, 1fr); }
     .topbar { flex-wrap: wrap; align-items: center; padding-left: 72px; padding-right: 10px; gap: 4px; }
-    .topbar-right { flex: 1; justify-content: flex-end; gap: 6px; }
-    .topbar-right .btn span, .topbar-right .btn-text { display: none; }
     .filter-bar { flex-direction: column; align-items: stretch; }
     .filter-bar select, .filter-bar input { width: 100%; min-width: auto; }
     .modal { padding: 14px; width: 98%; }
@@ -221,11 +220,29 @@
     .worker-actions { flex-wrap: wrap; gap: 6px; }
     .worker-actions .btn:first-child { flex: 1 1 100%; justify-content: center; }
     .worker-actions .btn:not(:first-child) { flex: 1; justify-content: center; }
-    /* Tabla trabajadores: ocultar columnas menos importantes */
-    #tabla-trab-servicios tr td:nth-child(3),
-    #tabla-trab-servicios tr th:nth-child(3),
-    #tabla-trab-servicios tr td:nth-child(5),
-    #tabla-trab-servicios tr th:nth-child(5) { display: none; }
+    /* Clientes: ocultar Contacto (2) y Moto (3) */
+    table:has(#tabla-clientes) th:nth-child(2), table:has(#tabla-clientes) td:nth-child(2),
+    table:has(#tabla-clientes) th:nth-child(3), table:has(#tabla-clientes) td:nth-child(3) { display: none; }
+    /* Inventario: ocultar Cód (1), Categoría (3), P.Compra (4) */
+    table:has(#tabla-inventario) th:nth-child(1), table:has(#tabla-inventario) td:nth-child(1),
+    table:has(#tabla-inventario) th:nth-child(3), table:has(#tabla-inventario) td:nth-child(3),
+    table:has(#tabla-inventario) th:nth-child(4), table:has(#tabla-inventario) td:nth-child(4) { display: none; }
+    /* Servicios: ocultar # (1), Moto (5), Descripción (6) */
+    table:has(#tabla-servicios) th:nth-child(1), table:has(#tabla-servicios) td:nth-child(1),
+    table:has(#tabla-servicios) th:nth-child(5), table:has(#tabla-servicios) td:nth-child(5),
+    table:has(#tabla-servicios) th:nth-child(6), table:has(#tabla-servicios) td:nth-child(6) { display: none; }
+    /* Servicios por trabajador: ocultar # (1), Trabajador (3), Moto (5), Descripción (6) */
+    table:has(#tabla-trab-servicios) th:nth-child(1), table:has(#tabla-trab-servicios) td:nth-child(1),
+    table:has(#tabla-trab-servicios) th:nth-child(3), table:has(#tabla-trab-servicios) td:nth-child(3),
+    table:has(#tabla-trab-servicios) th:nth-child(5), table:has(#tabla-trab-servicios) td:nth-child(5),
+    table:has(#tabla-trab-servicios) th:nth-child(6), table:has(#tabla-trab-servicios) td:nth-child(6) { display: none; }
+    /* Finanzas resumen: ocultar M.Obra (3) y Comisión (4) */
+    table:has(#tabla-fin-trabajadores) th:nth-child(3), table:has(#tabla-fin-trabajadores) td:nth-child(3),
+    table:has(#tabla-fin-trabajadores) th:nth-child(4), table:has(#tabla-fin-trabajadores) td:nth-child(4) { display: none; }
+    /* Finanzas detalle: ocultar Descripción (4), Repuestos (5), M.Obra (6) */
+    table:has(#tabla-finanzas) th:nth-child(4), table:has(#tabla-finanzas) td:nth-child(4),
+    table:has(#tabla-finanzas) th:nth-child(5), table:has(#tabla-finanzas) td:nth-child(5),
+    table:has(#tabla-finanzas) th:nth-child(6), table:has(#tabla-finanzas) td:nth-child(6) { display: none; }
     input, select, textarea { padding: 11px 12px; font-size: 14px; }
     .tab-btn { padding: 8px 10px; }
     .content { padding: 10px; }
