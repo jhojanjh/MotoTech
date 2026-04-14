@@ -46,13 +46,19 @@ app.use((err, _req, res, _next) => {
 // ── MONGODB + ARRANQUE ────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3001;
 
-mongoose
-  .connect(process.env.MONGODB_URI)
-  .then(() => {
-    console.log('✅ MongoDB Atlas conectado');
-    app.listen(PORT, () => console.log(`🚀 API corriendo en http://localhost:${PORT}`));
-  })
-  .catch(err => {
-    console.error('❌ Error conectando MongoDB:', err.message);
-    process.exit(1);
-  });
+// Exportar app para Vercel serverless
+module.exports = app;
+
+// Solo arrancar servidor si se ejecuta directamente (no en serverless)
+if (require.main === module) {
+  mongoose
+    .connect(process.env.MONGODB_URI)
+    .then(() => {
+      console.log('✅ MongoDB Atlas conectado');
+      app.listen(PORT, () => console.log(`🚀 API corriendo en http://localhost:${PORT}`));
+    })
+    .catch(err => {
+      console.error('❌ Error conectando MongoDB:', err.message);
+      process.exit(1);
+    });
+}
