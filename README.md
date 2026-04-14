@@ -1,151 +1,105 @@
-# 🏍 MotoTech — Guía de Despliegue
+# 🏍 MotoTech — Sistema de Gestión para Taller de Motos
+
+App web completa para administrar un taller de motos. Registro de trabajadores, clientes, inventario, servicios, finanzas y reportes de comisiones.
+
+**Demo:** https://moto-tech-alpha.vercel.app
+
+---
+
+## Stack
+
+| Capa | Tecnología |
+|------|-----------|
+| Frontend | HTML + CSS + JavaScript vanilla |
+| Backend | Node.js + Express |
+| Base de datos | MongoDB Atlas |
+| Autenticación | JWT + bcrypt |
+| Hosting frontend | Vercel |
+| Hosting backend | Vercel (serverless) |
+
+---
 
 ## Estructura del proyecto
 
 ```
 mototech/
-├── backend/          ← Node.js + Express + MongoDB
+├── backend/
 │   ├── server.js
 │   ├── models/
-│   │   └── index.js  (Trabajador, Cliente, Producto, Servicio, Pago)
+│   │   └── index.js        (Trabajador, Cliente, Producto, Servicio, Pago, Usuario)
 │   ├── routes/
+│   │   ├── auth.js          ← login, setup, cambio de contraseña
 │   │   ├── trabajadores.js
 │   │   ├── clientes.js
 │   │   ├── productos.js
 │   │   ├── servicios.js
 │   │   ├── pagos.js
-│   │   └── reportes.js   ← endpoint de reporte con rango de fechas
-│   ├── .env.example
-│   ├── render.yaml
+│   │   └── reportes.js
+│   ├── middleware/
+│   │   └── auth.js          ← verificación JWT
+│   ├── api/
+│   │   └── index.js         ← handler serverless para Vercel
+│   ├── vercel.json
 │   └── package.json
 └── frontend/
-    ├── index.html    ← app completa, conectada a la API
-    ├── vercel.json
-    └── netlify.toml
+    ├── index.html           ← app completa (SPA)
+    └── vercel.json
 ```
 
 ---
 
-## Paso 1 — Crear la base de datos en MongoDB Atlas (gratis)
+## Módulos
 
-1. Ve a https://cloud.mongodb.com y crea una cuenta
-2. Crea un **Cluster gratuito** (M0 — 512MB)
-3. En **Database Access** → agrega un usuario con contraseña
-4. En **Network Access** → agrega `0.0.0.0/0` (permite acceso desde cualquier IP)
-5. En tu cluster → **Connect** → **Compass / Drivers** → copia la URI:
-   ```
-   mongodb+srv://<usuario>:<password>@cluster0.xxxxx.mongodb.net/mototech
-   ```
-
----
-
-## Paso 2 — Desplegar el backend en Render
-
-1. Sube la carpeta `backend/` a un repo de GitHub
-2. Ve a https://render.com → **New Web Service**
-3. Conecta tu repo de GitHub
-4. Configura:
-   - **Build Command:** `npm install`
-   - **Start Command:** `npm start`
-   - **Plan:** Free
-5. En **Environment Variables** agrega:
-   | Variable | Valor |
-   |---|---|
-   | `MONGODB_URI` | tu URI de Atlas |
-   | `ALLOWED_ORIGINS` | `https://tu-app.vercel.app` |
-   | `PORT` | `3001` |
-6. Haz clic en **Create Web Service**
-7. Espera ~2 min. Verás en los logs: `✅ MongoDB Atlas conectado` y `🚀 API corriendo`
-8. **Copia la URL de tu servicio**, ej: `https://mototech-api.onrender.com`
+- **Dashboard** — métricas generales, gráficos, stock bajo, ranking de trabajadores
+- **Trabajadores** — CRUD, tarjetas con estadísticas y comisiones
+- **Inventario** — repuestos, precios, stock, alertas de mínimo
+- **Servicios** — registro de trabajos, repuestos usados, descuento automático de stock
+- **Finanzas** — ingresos, costos y ganancias por período y trabajador
+- **Clientes** — historial de servicios y gasto total
+- **Reportes** — liquidación de comisiones con registro de pagos
+- **Login** — autenticación con JWT, sesión de 24 horas
 
 ---
 
-## Paso 3 — Conectar el frontend con el backend
+## Despliegue desde cero
 
-1. Abre `frontend/index.html`
-2. Busca esta línea (cerca del inicio del `<script>`):
-   ```js
-   : 'https://TU-BACKEND.onrender.com/api';
-   ```
-3. Reemplaza `TU-BACKEND` con el nombre real de tu servicio en Render:
-   ```js
-   : 'https://mototech-api.onrender.com/api';
-   ```
+### 1. MongoDB Atlas
+1. Crea cuenta en https://cloud.mongodb.com
+2. Crea un cluster gratuito (M0)
+3. En **Database Access** → crea usuario con contraseña
+4. En **Network Access** → agrega `0.0.0.0/0`
+5. Copia la URI: `mongodb+srv://<user>:<pass>@cluster0.xxxxx.mongodb.net/`
 
----
+### 2. Backend en Vercel
+1. Ve a https://vercel.com → **Add New Project**
+2. Importa el repo `jhojanjh/MotoTech`
+3. **Root Directory:** `backend`
+4. Agrega variables de entorno:
 
-## Paso 4 — Desplegar el frontend en Vercel (recomendado)
+| Variable | Valor |
+|---|---|
+| `MONGODB_URI` | tu URI de MongoDB Atlas |
+| `ALLOWED_ORIGINS` | `https://tu-frontend.vercel.app` |
+| `JWT_SECRET` | una cadena aleatoria larga |
 
-1. Sube la carpeta `frontend/` a otro repo de GitHub (o una subcarpeta del mismo)
-2. Ve a https://vercel.com → **Add New Project**
-3. Importa tu repo
-4. Deja todo por defecto y haz clic en **Deploy**
-5. Tu app estará en: `https://mototech-xxxx.vercel.app`
+5. Deploy. La URL del backend sera: `https://tu-backend.vercel.app`
 
-### Alternativa — Netlify
-1. Ve a https://netlify.com → **Add new site** → **Import from Git**
-2. Selecciona tu repo del frontend
-3. **Publish directory:** `.` (punto — la raíz)
-4. Haz clic en **Deploy**
-
----
-
-## Paso 5 — Actualizar CORS en Render
-
-Una vez tengas la URL de Vercel/Netlify, vuelve a Render:
-- **Environment** → `ALLOWED_ORIGINS` → agrega la URL:
-  ```
-  https://mototech-xxxx.vercel.app,http://localhost:5500
-  ```
-- Render redesplegará automáticamente
-
----
-
-## API Reference
-
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| GET | `/api/trabajadores` | Lista todos |
-| POST | `/api/trabajadores` | Crear nuevo |
-| PUT | `/api/trabajadores/:id` | Editar |
-| DELETE | `/api/trabajadores/:id` | Eliminar |
-| GET | `/api/clientes` | Lista todos |
-| GET | `/api/productos` | Lista inventario |
-| POST | `/api/productos/:id/stock` | Ajustar stock |
-| GET | `/api/servicios?desde=&hasta=&trabajadorId=` | Servicios filtrados |
-| POST | `/api/servicios` | Registrar servicio (descuenta stock) |
-| GET | `/api/pagos` | Lista pagos |
-| POST | `/api/pagos` | Registrar pago de comisión |
-| **GET** | **`/api/reportes?desde=&hasta=&trabajadorId=`** | **Reporte completo con comisiones** |
-| GET | `/health` | Health check para Render |
-
-### Ejemplo — Reporte
+### 3. Frontend en Vercel
+1. Nuevo proyecto → mismo repo
+2. **Root Directory:** `frontend`
+3. En `frontend/index.html` actualiza la URL del backend:
+```js
+: 'https://tu-backend.vercel.app/api';
 ```
-GET /api/reportes?desde=2026-03-01&hasta=2026-03-31
+4. Deploy. La URL del frontend sera: `https://tu-frontend.vercel.app`
 
-Respuesta:
-{
-  "periodo": { "desde": "2026-03-01", "hasta": "2026-03-31" },
-  "resumenGeneral": {
-    "totalServicios": 42,
-    "totalIngresos": 8500000,
-    "totalManoObra": 3200000,
-    "totalComisiones": 640000
-  },
-  "resumenTrabajadores": [
-    {
-      "trabajador": { "nombre": "Carlos", "comisionPct": 20 },
-      "totalServicios": 18,
-      "manoObra": 1500000,
-      "comision": 300000,
-      "pagado": 0,
-      "pendiente": 300000
-    }
-  ],
-  "servicios": [...],
-  "pagos": [...]
-}
-```
+### 4. Primer acceso
+1. Abre la app → pantalla de login
+2. Click en **"Crear administrador"**
+3. Crea tu usuario y contraseña (min 6 caracteres)
+4. Inicia sesion
+
+> Si olvidaste la contraseña: ve a MongoDB Atlas → coleccion `usuarios` → elimina el documento → vuelve al paso 2.
 
 ---
 
@@ -154,16 +108,38 @@ Respuesta:
 ```bash
 # Backend
 cd backend
-cp .env.example .env
-# Edita .env con tu MONGODB_URI
+cp .env.example .env   # edita con tu MONGODB_URI y JWT_SECRET
 npm install
-npm run dev    # corre en http://localhost:3001
+npm run dev            # corre en http://localhost:3001
 
 # Frontend
 # Abre frontend/index.html con Live Server (VS Code)
-# o: python3 -m http.server 5500
 ```
 
-> ⚠️ **Plan gratuito de Render:** el servicio "duerme" tras 15 minutos sin peticiones.
-> La primera petición después de dormir tarda ~30 segundos en responder.
-> Para producción real, considera el plan de $7/mes que mantiene el servicio activo.
+---
+
+## API Reference
+
+Todas las rutas excepto `/api/auth/*` requieren el header:
+```
+Authorization: Bearer <token>
+```
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| POST | `/api/auth/login` | Iniciar sesión |
+| POST | `/api/auth/setup` | Crear primer administrador (solo una vez) |
+| GET | `/api/trabajadores` | Listar trabajadores |
+| POST | `/api/trabajadores` | Crear trabajador |
+| PUT | `/api/trabajadores/:id` | Editar trabajador |
+| DELETE | `/api/trabajadores/:id` | Eliminar trabajador |
+| GET | `/api/clientes` | Listar clientes |
+| POST | `/api/clientes` | Crear cliente |
+| GET | `/api/productos` | Listar inventario |
+| POST | `/api/productos/:id/stock` | Ajustar stock |
+| GET | `/api/servicios` | Listar servicios (filtros: `desde`, `hasta`, `trabajadorId`) |
+| POST | `/api/servicios` | Registrar servicio (descuenta stock automáticamente) |
+| GET | `/api/pagos` | Listar pagos |
+| POST | `/api/pagos` | Registrar pago de comisión |
+| GET | `/api/reportes` | Reporte completo (filtros: `desde`, `hasta`, `trabajadorId`) |
+| GET | `/health` | Health check |
