@@ -70,6 +70,12 @@ const PagoSchema = new Schema({
 
 PagoSchema.index({ trabajadorId: 1, desde: 1, hasta: 1 });
 
+// ── USUARIO ───────────────────────────────────────────────────────────────────
+const UsuarioSchema = new Schema({
+  username: { type: String, required: true, unique: true, trim: true, lowercase: true },
+  password: { type: String, required: true },
+}, { timestamps: true });
+
 // ── EXPORTS ───────────────────────────────────────────────────────────────────
 module.exports = {
   Trabajador: mongoose.model('Trabajador', TrabajadorSchema),
@@ -77,4 +83,5 @@ module.exports = {
   Producto:   mongoose.model('Producto',   ProductoSchema),
   Servicio:   mongoose.model('Servicio',   ServicioSchema),
   Pago:       mongoose.model('Pago',       PagoSchema),
+  Usuario:    mongoose.model('Usuario',    UsuarioSchema),
 };

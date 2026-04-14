@@ -351,9 +351,65 @@
   .view.active { display:block; }
   /* Worker report */
   .worker-report-section { margin-top:16px; }
+
+  /* ========== LOGIN SCREEN ========== */
+  #login-screen {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+  }
+  #login-screen.active { display: flex; }
+  .login-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 36px 32px;
+    width: 100%;
+    max-width: 380px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+  .login-logo { font-family:'Rajdhani',sans-serif; font-size:32px; font-weight:700; color:var(--accent); letter-spacing:3px; text-align:center; margin-bottom:4px; }
+  .login-sub { font-family:'Share Tech Mono',monospace; font-size:10px; color:var(--text3); text-align:center; letter-spacing:2px; margin-bottom:28px; }
+  .login-error { background:var(--red-low); border:1px solid rgba(232,82,42,.3); color:var(--danger); padding:10px 12px; border-radius:6px; font-size:13px; margin-bottom:14px; display:none; }
+  .login-error.show { display:block; }
+  .login-toggle { text-align:center; margin-top:16px; font-size:12px; color:var(--text3); }
+  .login-toggle a { color:var(--accent); cursor:pointer; text-decoration:underline; }
+  .login-btn { width:100%; justify-content:center; padding:12px; font-size:14px; margin-top:8px; }
+  .login-divider { display:flex; align-items:center; gap:10px; margin:16px 0; color:var(--text3); font-size:11px; }
+  .login-divider::before, .login-divider::after { content:''; flex:1; height:1px; background:var(--border); }
 </style>
 </head>
 <body>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen" class="active">
+  <div class="login-box">
+    <div class="login-logo">🏍 MotoTech</div>
+    <div class="login-sub">TALLER DE MOTOS — ACCESO</div>
+    <!-- LOGIN FORM -->
+    <div id="lf-login">
+      <div class="login-error" id="login-error"></div>
+      <div class="form-group"><label>Usuario</label><input type="text" id="login-user" placeholder="usuario" autocomplete="username"></div>
+      <div class="form-group"><label>Contraseña</label><input type="password" id="login-pass" placeholder="••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <button class="btn btn-primary login-btn" onclick="doLogin()">Entrar</button>
+      <div class="login-toggle">Primera vez? <a onclick="showLoginTab('setup')">Crear administrador</a></div>
+    </div>
+    <!-- SETUP FORM -->
+    <div id="lf-setup" style="display:none">
+      <div class="login-error" id="setup-error"></div>
+      <p style="font-size:12px;color:var(--text3);margin-bottom:16px">Crea el usuario administrador. Solo funciona una vez.</p>
+      <div class="form-group"><label>Usuario</label><input type="text" id="setup-user" placeholder="admin"></div>
+      <div class="form-group"><label>Contraseña (min 6 caracteres)</label><input type="password" id="setup-pass" placeholder="••••••"></div>
+      <button class="btn btn-primary login-btn" onclick="doSetup()">Crear administrador</button>
+      <div class="login-toggle"><a onclick="showLoginTab('login')">Volver al login</a></div>
+    </div>
+  </div>
+</div>
 
 <button class="menu-toggle" id="menuToggle" aria-label="Menú">☰</button>
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
@@ -375,8 +431,8 @@
     <div class="nav-item" onclick="showView('reportes',this)"><span class="nav-icon">📄</span> Reportes</div>
   </div>
   <div class="sidebar-footer">
-    <div>DATOS: LocalStorage</div>
-    <div id="data-count"></div>
+    <div id="login-username" style="margin-bottom:8px;color:var(--text2)"></div>
+    <button class="btn btn-danger btn-sm" style="width:100%;justify-content:center" onclick="doLogout()">🚪 Cerrar sesión</button>
   </div>
 </nav>
 
@@ -572,10 +628,77 @@ const API_BASE = window.location.hostname === 'localhost' || window.location.hos
 // Cache en memoria para evitar peticiones repetidas en la misma sesión
 const cache = { trabajadores: null, clientes: null, productos: null };
 
+// ==================== AUTH ====================
+function getToken() { return localStorage.getItem('mt_token'); }
+function getUsername() { return localStorage.getItem('mt_user'); }
+
+function showLoginTab(tab) {
+  document.getElementById('lf-login').style.display = tab === 'login' ? 'block' : 'none';
+  document.getElementById('lf-setup').style.display = tab === 'setup' ? 'block' : 'none';
+  document.getElementById('login-error').classList.remove('show');
+  document.getElementById('setup-error').classList.remove('show');
+}
+
+async function doLogin() {
+  const username = document.getElementById('login-user').value.trim();
+  const password = document.getElementById('login-pass').value;
+  const errEl = document.getElementById('login-error');
+  errEl.classList.remove('show');
+  if (!username || !password) { errEl.textContent = 'Completa todos los campos'; errEl.classList.add('show'); return; }
+  try {
+    const data = await fetch(API_BASE + '/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    }).then(r => r.json().then(d => ({ ok: r.ok, ...d })));
+    if (!data.ok) { errEl.textContent = data.error || 'Error al iniciar sesión'; errEl.classList.add('show'); return; }
+    localStorage.setItem('mt_token', data.token);
+    localStorage.setItem('mt_user', data.username);
+    enterApp();
+    await initApp();
+  } catch { errEl.textContent = 'No se pudo conectar al servidor'; errEl.classList.add('show'); }
+}
+
+async function doSetup() {
+  const username = document.getElementById('setup-user').value.trim();
+  const password = document.getElementById('setup-pass').value;
+  const errEl = document.getElementById('setup-error');
+  errEl.classList.remove('show');
+  if (!username || !password) { errEl.textContent = 'Completa todos los campos'; errEl.classList.add('show'); return; }
+  try {
+    const data = await fetch(API_BASE + '/auth/setup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    }).then(r => r.json().then(d => ({ ok: r.ok, ...d })));
+    if (!data.ok) { errEl.textContent = data.error || 'Error al crear administrador'; errEl.classList.add('show'); return; }
+    document.getElementById('login-user').value = username;
+    document.getElementById('login-pass').value = password;
+    showLoginTab('login');
+    await doLogin();
+  } catch { errEl.textContent = 'No se pudo conectar al servidor'; errEl.classList.add('show'); }
+}
+
+function doLogout() {
+  localStorage.removeItem('mt_token');
+  localStorage.removeItem('mt_user');
+  document.getElementById('login-screen').classList.add('active');
+  document.getElementById('login-pass').value = '';
+}
+
+function enterApp() {
+  document.getElementById('login-screen').classList.remove('active');
+  const user = getUsername();
+  if (user) document.getElementById('login-username').textContent = '👤 ' + user;
+}
+
 async function api(method, path, body) {
+  const token = getToken();
   const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (token) opts.headers['Authorization'] = 'Bearer ' + token;
   if (body) opts.body = JSON.stringify(body);
   const res = await fetch(API_BASE + path, opts);
+  if (res.status === 401) { doLogout(); throw new Error('Sesión expirada'); }
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || `Error ${res.status}`);
   return data;
@@ -1395,12 +1518,11 @@ window.addEventListener('resize',()=>{
 
 // ── ARRANQUE ────────────────────────────────────────────────────────────────
 setInterval(updateDatetime,1000); updateDatetime();
-(async()=>{
+async function initApp() {
   try {
     await renderDashboard();
     await populateFiltros();
     await updateBadges();
-    // Pre-inicializar fechas de reporte
     const {desde,hasta}=calcRangoRapido('semana');
     document.getElementById('reporte-desde').value=desde;
     document.getElementById('reporte-hasta').value=hasta;
@@ -1410,6 +1532,22 @@ setInterval(updateDatetime,1000); updateDatetime();
     console.error('Error de arranque — ¿está el backend corriendo?', e);
     document.getElementById('page-title').textContent='⚠️ Sin conexión al backend';
   }
+}
+
+(async()=>{
+  const token = getToken();
+  if (token) {
+    // Verificar que el token sigue siendo valido
+    try {
+      await fetch(API_BASE + '/trabajadores', { headers: { 'Authorization': 'Bearer ' + token } })
+        .then(r => { if (r.status === 401) throw new Error('expired'); });
+      enterApp();
+      await initApp();
+    } catch {
+      doLogout();
+    }
+  }
+  // Si no hay token, la pantalla de login ya esta visible
 })();
 </script>
 </body>

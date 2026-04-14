@@ -23,13 +23,18 @@ app.use(cors({
 
 app.use(express.json());
 
-// ── RUTAS ─────────────────────────────────────────────────────────────────────
-app.use('/api/trabajadores', require('./routes/trabajadores'));
-app.use('/api/clientes',     require('./routes/clientes'));
-app.use('/api/productos',    require('./routes/productos'));
-app.use('/api/servicios',    require('./routes/servicios'));
-app.use('/api/pagos',        require('./routes/pagos'));
-app.use('/api/reportes',     require('./routes/reportes'));
+// ── AUTENTICACION ─────────────────────────────────────────────────────────────
+app.use('/api/auth', require('./routes/auth'));
+
+const auth = require('./middleware/auth');
+
+// ── RUTAS PROTEGIDAS ──────────────────────────────────────────────────────────
+app.use('/api/trabajadores', auth, require('./routes/trabajadores'));
+app.use('/api/clientes',     auth, require('./routes/clientes'));
+app.use('/api/productos',    auth, require('./routes/productos'));
+app.use('/api/servicios',    auth, require('./routes/servicios'));
+app.use('/api/pagos',        auth, require('./routes/pagos'));
+app.use('/api/reportes',     auth, require('./routes/reportes'));
 
 // Health check — Render lo usa para detectar que el servicio está vivo
 app.get('/health', (_req, res) => res.json({ status: 'ok', ts: new Date() }));
