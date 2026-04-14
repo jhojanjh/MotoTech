@@ -213,7 +213,19 @@
     .service-item-row { grid-template-columns: 1fr; gap: 8px; }
     .service-item-row .btn { width: auto; align-self: stretch; }
     .stat-value { font-size: 20px; }
-    .worker-stats { grid-template-columns: repeat(3, 1fr); }
+    /* Worker cards en móvil */
+    .worker-stats { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .worker-stat-val { font-size: 13px !important; }
+    .worker-stat-lbl { font-size: 8px; }
+    .worker-stat { padding: 6px 4px; }
+    .worker-actions { flex-wrap: wrap; gap: 6px; }
+    .worker-actions .btn:first-child { flex: 1 1 100%; justify-content: center; }
+    .worker-actions .btn:not(:first-child) { flex: 1; justify-content: center; }
+    /* Tabla trabajadores: ocultar columnas menos importantes */
+    #tabla-trab-servicios tr td:nth-child(3),
+    #tabla-trab-servicios tr th:nth-child(3),
+    #tabla-trab-servicios tr td:nth-child(5),
+    #tabla-trab-servicios tr th:nth-child(5) { display: none; }
     input, select, textarea { padding: 11px 12px; font-size: 14px; }
     .tab-btn { padding: 8px 10px; }
     .content { padding: 10px; }
