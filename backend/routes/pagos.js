@@ -6,8 +6,11 @@ router.get('/', async (req, res, next) => {
   try {
     const filtro = {};
     if (req.query.trabajadorId) filtro.trabajadorId = req.query.trabajadorId;
-    if (req.query.desde) filtro.desde = { $gte: new Date(req.query.desde) };
-    if (req.query.hasta) filtro.hasta = { $lte: new Date(req.query.hasta) };
+    if (req.query.desde || req.query.hasta) {
+      filtro.fechaPago = {};
+      if (req.query.desde) filtro.fechaPago.$gte = new Date(req.query.desde);
+      if (req.query.hasta) filtro.fechaPago.$lte = new Date(req.query.hasta + 'T23:59:59');
+    }
     res.json(await Pago.find(filtro).populate('trabajadorId', 'nombre cargo').sort({ fechaPago: -1 }));
   } catch (e) { next(e); }
 });
